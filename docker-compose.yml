@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+  app:
+    build: ./docker/local/php-fpm
+    depends_on:
+      - db
+    volumes:
+      - ./src:/app:cached
+      - app-vendor-volume:/app/vendor
+    working_dir: /app
+  web:
+    build: ./docker/local/nginx
+    ports:
+      - ${WEB_HTTP_PORT:-80}:80
+    depends_on:
+      - app
+  db:
+    build: ./docker/local/mysql
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE:-laravel}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-password}
+    ports:
+      - ${DB_PORT:-3306}:3306
+    volumes:
+      - db-volume:/var/lib/mysql
+      - ./docker/local/mysql/logs:/var/log/mysql:delegated
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - ${MAILHOG_SMTP_PORT:-1025}:1025
+      - ${MAILHOG_HTTP_PORT:-8025}:8025
+
+volumes:
+  app-vendor-volume:
+  db-volume:
